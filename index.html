@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>キャリアネットワーク開通管理システム</title>
+  <meta name="description" content="海外キャリアとの通信ネットワーク開通業務を管理するKintone風アプリケーション">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-content">
+        <h1 class="app-title">
+          <span class="app-title-icon">📡</span>
+          キャリアネットワーク開通管理
+        </h1>
+        <div class="header-actions">
+          <span id="currentUser">管理者</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Body -->
+    <div class="app-body">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar">
+        <nav>
+          <ul class="sidebar-nav">
+            <li class="sidebar-nav-item">
+              <a href="#" class="sidebar-nav-link active" data-view="dashboard">
+                <span class="sidebar-nav-icon">📊</span>
+                <span>ダッシュボード</span>
+              </a>
+            </li>
+            <li class="sidebar-nav-item">
+              <a href="#" class="sidebar-nav-link" data-view="master">
+                <span class="sidebar-nav-icon">📋</span>
+                <span>マスターファイル</span>
+              </a>
+            </li>
+            <li class="sidebar-nav-item">
+              <a href="#" class="sidebar-nav-link" data-view="progress">
+                <span class="sidebar-nav-icon">📈</span>
+                <span>進捗管理表</span>
+              </a>
+            </li>
+            <li class="sidebar-nav-item">
+              <a href="#" class="sidebar-nav-link" data-view="order">
+                <span class="sidebar-nav-icon">⚙️</span>
+                <span>オーダー依頼表</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="main-content">
+        <!-- Dashboard View -->
+        <div id="dashboardView" class="view-container">
+          <h2 class="mb-lg">ダッシュボード</h2>
+          
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">総キャリア数</div>
+              <div class="stat-value" id="statTotalCarriers">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">進行中案件</div>
+              <div class="stat-value" id="statActiveProjects">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">完了案件</div>
+              <div class="stat-value" id="statCompletedProjects">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">保留中オーダー</div>
+              <div class="stat-value" id="statPendingOrders">0</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">最近の活動</h3>
+            </div>
+            <div class="card-body">
+              <div id="recentActivity" class="empty-state">
+                <div class="empty-state-icon">📝</div>
+                <div class="empty-state-text">まだデータがありません</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Master File View -->
+        <div id="masterView" class="view-container hidden">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <span>📋</span>
+                マスターファイル
+              </h2>
+              <div class="card-actions">
+                <button class="btn btn-primary" id="addMasterBtn">
+                  <span>➕</span>
+                  新規追加
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="search-bar">
+                <div class="search-input-wrapper">
+                  <span class="search-icon">🔍</span>
+                  <input type="text" class="search-input" id="masterSearch" placeholder="TADIG、事業者名で検索...">
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="table" id="masterTable">
+                  <thead>
+                    <tr>
+                      <th>TADIG</th>
+                      <th>事業者名</th>
+                      <th>国</th>
+                      <th>PLMN</th>
+                      <th>サービス提供形態</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="masterTableBody">
+                    <!-- Data will be populated by JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Management View -->
+        <div id="progressView" class="view-container hidden">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <span>📈</span>
+                進捗管理表
+              </h2>
+              <div class="card-actions">
+                <button class="btn btn-primary" id="addProgressBtn">
+                  <span>➕</span>
+                  新規案件
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="search-bar">
+                <div class="search-input-wrapper">
+                  <span class="search-icon">🔍</span>
+                  <input type="text" class="search-input" id="progressSearch" placeholder="TADIG、担当者で検索...">
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="table" id="progressTable">
+                  <thead>
+                    <tr>
+                      <th>シーケンス</th>
+                      <th>TADIG</th>
+                      <th>事業者名</th>
+                      <th>担当者</th>
+                      <th>提供開始日</th>
+                      <th>サービス提供方式</th>
+                      <th>優先順位</th>
+                      <th>ステータス</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="progressTableBody">
+                    <!-- Data will be populated by JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order Dependency View -->
+        <div id="orderView" class="view-container hidden">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <span>⚙️</span>
+                オーダー依頼表
+              </h2>
+            </div>
+            <div class="card-body">
+              <div class="search-bar">
+                <div class="search-input-wrapper">
+                  <span class="search-icon">🔍</span>
+                  <input type="text" class="search-input" id="orderSearch" placeholder="TADIG、事業者名で検索...">
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="table" id="orderTable">
+                  <thead>
+                    <tr>
+                      <th>TADIG</th>
+                      <th>事業者名</th>
+                      <th>DNS設定日</th>
+                      <th>MME設定日</th>
+                      <th>TCC受領日</th>
+                      <th>注文の検証日</th>
+                      <th>設定限定</th>
+                      <th>優先順位</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="orderTableBody">
+                    <!-- Data will be populated by JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Master Modal -->
+  <div id="masterModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="masterModalTitle">マスター追加</h3>
+        <button class="modal-close" onclick="closeMasterModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="masterForm">
+          <input type="hidden" id="masterEditId">
+          <div class="form-group">
+            <label class="form-label required" for="masterTadig">TADIG</label>
+            <input type="text" class="form-input" id="masterTadig" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label required" for="masterName">事業者名</label>
+            <input type="text" class="form-input" id="masterName" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label required" for="masterCountry">国</label>
+              <input type="text" class="form-input" id="masterCountry" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="masterPlmn">PLMN</label>
+              <input type="text" class="form-input" id="masterPlmn" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label required" for="masterServiceType">サービス提供形態</label>
+            <select class="form-select" id="masterServiceType" required>
+              <option value="">選択してください</option>
+              <option value="LTE">LTE</option>
+              <option value="VOLTE">VOLTE</option>
+              <option value="5G">5G</option>
+              <option value="LTE+VOLTE">LTE+VOLTE</option>
+              <option value="LTE+5G">LTE+5G</option>
+              <option value="VOLTE+5G">VOLTE+5G</option>
+              <option value="ALL">ALL (LTE+VOLTE+5G)</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeMasterModal()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveMaster()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Modal -->
+  <div id="progressModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="progressModalTitle">進捗案件追加</h3>
+        <button class="modal-close" onclick="closeProgressModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="progressForm">
+          <input type="hidden" id="progressEditId">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label required" for="progressTadig">TADIG</label>
+              <select class="form-select" id="progressTadig" required>
+                <option value="">選択してください</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="progressManager">担当者</label>
+              <input type="text" class="form-input" id="progressManager" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="progressStartDate">提供開始日</label>
+              <input type="date" class="form-input" id="progressStartDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="progressServiceMethod">サービス提供方式</label>
+              <select class="form-select" id="progressServiceMethod" required>
+                <option value="">選択してください</option>
+                <option value="LTE">LTE</option>
+                <option value="VOLTE">VOLTE</option>
+                <option value="5G">5G</option>
+                <option value="LTE+VOLTE">LTE+VOLTE</option>
+                <option value="LTE+5G">LTE+5G</option>
+                <option value="VOLTE+5G">VOLTE+5G</option>
+                <option value="ALL">ALL (LTE+VOLTE+5G)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="progressRevenue">想定revenue</label>
+              <input type="number" class="form-input" id="progressRevenue" step="0.01">
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="progressPriority">優先順位</label>
+              <select class="form-select" id="progressPriority" required>
+                <option value="高">高</option>
+                <option value="中" selected>中</option>
+                <option value="低">低</option>
+              </select>
+            </div>
+          </div>
+          <h4 class="mt-lg mb-md">Gate条件</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="progressQaDate">QA受領日</label>
+              <input type="date" class="form-input" id="progressQaDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="progressSimDate">SIM受領日</label>
+              <input type="date" class="form-input" id="progressSimDate">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="progressIr2Date">IR2受領日</label>
+              <input type="date" class="form-input" id="progressIr2Date">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="progressTestSheetDate">試験シート受領日</label>
+              <input type="date" class="form-input" id="progressTestSheetDate">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="progressTdTapDate">TD TAP設定日</label>
+              <input type="date" class="form-input" id="progressTdTapDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="progressSyniverseDate">Syniverse設定日</label>
+              <input type="date" class="form-input" id="progressSyniverseDate">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeProgressModal()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveProgress()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Modal -->
+  <div id="orderModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">オーダー詳細</h3>
+        <button class="modal-close" onclick="closeOrderModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="orderForm">
+          <input type="hidden" id="orderEditId">
+          <div class="form-group">
+            <label class="form-label">TADIG</label>
+            <input type="text" class="form-input" id="orderTadig" readonly>
+          </div>
+          <div class="form-group">
+            <label class="form-label">事業者名</label>
+            <input type="text" class="form-input" id="orderCarrierName" readonly>
+          </div>
+          <h4 class="mt-lg mb-md">設定日</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="orderDnsDate">DNS設定日</label>
+              <input type="date" class="form-input" id="orderDnsDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="orderMmeDate">MME設定日</label>
+              <input type="date" class="form-input" id="orderMmeDate">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="orderTccDate">TCC受領日</label>
+              <input type="date" class="form-input" id="orderTccDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="orderVerificationDate">注文の検証日</label>
+              <input type="date" class="form-input" id="orderVerificationDate">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="orderConfigLimit">設定限定</label>
+              <input type="text" class="form-input" id="orderConfigLimit">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="orderPriority">優先順位</label>
+              <select class="form-select" id="orderPriority">
+                <option value="高">高</option>
+                <option value="中" selected>中</option>
+                <option value="低">低</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeOrderModal()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveOrder()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
