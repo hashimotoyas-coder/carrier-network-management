@@ -1,7 +1,6 @@
 // ===================================
 // Data Models & State Management
 // ===================================
-
 class AppState {
   constructor() {
     this.carriers = this.loadFromStorage('carriers') || [];
@@ -10,7 +9,6 @@ class AppState {
     this.currentView = 'dashboard';
     this.nextSequence = this.loadFromStorage('nextSequence') || 1;
   }
-
   loadFromStorage(key) {
     try {
       const data = localStorage.getItem(key);
@@ -20,7 +18,6 @@ class AppState {
       return null;
     }
   }
-
   saveToStorage(key, data) {
     try {
       localStorage.setItem(key, JSON.stringify(data));
@@ -28,13 +25,11 @@ class AppState {
       console.error(`Error saving ${key}:`, e);
     }
   }
-
   // Carrier Master CRUD
   addCarrier(carrier) {
     this.carriers.push(carrier);
     this.saveToStorage('carriers', this.carriers);
   }
-
   updateCarrier(tadig, updatedCarrier) {
     const index = this.carriers.findIndex(c => c.tadig === tadig);
     if (index !== -1) {
@@ -42,16 +37,13 @@ class AppState {
       this.saveToStorage('carriers', this.carriers);
     }
   }
-
   deleteCarrier(tadig) {
     this.carriers = this.carriers.filter(c => c.tadig !== tadig);
     this.saveToStorage('carriers', this.carriers);
   }
-
   getCarrier(tadig) {
     return this.carriers.find(c => c.tadig === tadig);
   }
-
   // Progress Management CRUD
   addProgress(progress) {
     progress.sequence = this.nextSequence++;
@@ -63,7 +55,6 @@ class AppState {
     // Auto-create order if gate conditions are met
     this.checkAndCreateOrder(progress);
   }
-
   updateProgress(sequence, updatedProgress) {
     const index = this.progress.findIndex(p => p.sequence === sequence);
     if (index !== -1) {
@@ -75,7 +66,6 @@ class AppState {
       this.checkAndCreateOrder(this.progress[index], oldProgress);
     }
   }
-
   deleteProgress(sequence) {
     this.progress = this.progress.filter(p => p.sequence !== sequence);
     this.saveToStorage('progress', this.progress);
@@ -86,17 +76,14 @@ class AppState {
       this.deleteOrder(progressItem.tadig);
     }
   }
-
   getProgress(sequence) {
     return this.progress.find(p => p.sequence === sequence);
   }
-
   // Order Dependency CRUD
   addOrder(order) {
     this.orders.push(order);
     this.saveToStorage('orders', this.orders);
   }
-
   updateOrder(tadig, updatedOrder) {
     const index = this.orders.findIndex(o => o.tadig === tadig);
     if (index !== -1) {
@@ -106,16 +93,13 @@ class AppState {
       this.addOrder(updatedOrder);
     }
   }
-
   deleteOrder(tadig) {
     this.orders = this.orders.filter(o => o.tadig !== tadig);
     this.saveToStorage('orders', this.orders);
   }
-
   getOrder(tadig) {
     return this.orders.find(o => o.tadig === tadig);
   }
-
   // Auto-create order based on gate conditions
   checkAndCreateOrder(progress, oldProgress = null) {
     // Check if any gate condition is filled
@@ -142,7 +126,6 @@ class AppState {
       this.updateOrder(progress.tadig, order);
     }
   }
-
   // Statistics
   getStats() {
     return {
@@ -152,13 +135,11 @@ class AppState {
       pendingOrders: this.orders.filter(o => !o.verificationDate).length
     };
   }
-
   isProjectComplete(progress) {
     return progress.qaDate && progress.simDate && 
            progress.ir2Date && progress.testSheetDate &&
            progress.tdTapDate && progress.syniverseDate;
   }
-
   getProjectStatus(progress) {
     const gates = [
       progress.qaDate,
@@ -176,14 +157,11 @@ class AppState {
     return 'progress';
   }
 }
-
 // Global state
 const state = new AppState();
-
 // ===================================
 // View Management
 // ===================================
-
 function switchView(viewName) {
   // Hide all views
   document.querySelectorAll('.view-container').forEach(view => {
@@ -218,7 +196,6 @@ function switchView(viewName) {
   // Render the view
   renderView(viewName);
 }
-
 function renderView(viewName) {
   switch(viewName) {
     case 'dashboard':
@@ -235,11 +212,9 @@ function renderView(viewName) {
       break;
   }
 }
-
 // ===================================
 // Dashboard Rendering
 // ===================================
-
 function renderDashboard() {
   const stats = state.getStats();
   
@@ -247,6 +222,13 @@ function renderDashboard() {
   document.getElementById('statActiveProjects').textContent = stats.activeProjects;
   document.getElementById('statCompletedProjects').textContent = stats.completedProjects;
   document.getElementById('statPendingOrders').textContent = stats.pendingOrders;
+  
+  // Render charts
+  renderProgressChart();
+  renderStatusChart();
+  renderManagerChart();
+  renderPriorityChart();
+  renderGateAchievement();
   
   // Render recent activity
   const recentActivity = document.getElementById('recentActivity');
@@ -285,7 +267,7 @@ function renderDashboard() {
               return `
                 <tr>
                   <td>${p.sequence}</td>
-                  <td>${p.tadig} ${carrier ? `(${carrier.name})` : ''}</td>
+                  <td>${p.tadig} ${carrier ? [(${carrier.name})](cci:1://file:///Users/hashi/Desktop/hair%20salon%20HP/%E3%83%AD%E3%83%BC%E3%83%9F%E3%83%B3%E3%82%B0%E6%A1%88%E4%BB%B6%E7%AE%A1%E7%90%86/app.js:361:12-367:13) : ''}</td>
                   <td>${p.manager}</td>
                   <td>${getStatusBadge(status)}</td>
                   <td>${getPriorityBadge(p.priority)}</td>
@@ -298,11 +280,299 @@ function renderDashboard() {
     `;
   }
 }
-
+// ===================================
+// Chart Rendering Functions
+// ===================================
+let charts = {};
+function destroyChart(chartId) {
+  if (charts[chartId]) {
+    charts[chartId].destroy();
+    delete charts[chartId];
+  }
+}
+function renderProgressChart() {
+  const ctx = document.getElementById('progressChart');
+  if (!ctx) return;
+  
+  destroyChart('progressChart');
+  
+  const totalProjects = state.progress.length;
+  const completedProjects = state.progress.filter(p => state.isProjectComplete(p)).length;
+  const progressRate = totalProjects > 0 ? Math.round((completedProjects / totalProjects) * 100) : 0;
+  
+  charts.progressChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['完了', '未完了'],
+      datasets: [{
+        data: [completedProjects, totalProjects - completedProjects],
+        backgroundColor: [
+          'rgba(16, 185, 129, 0.8)',
+          'rgba(209, 213, 219, 0.5)'
+        ],
+        borderColor: [
+          'rgba(16, 185, 129, 1)',
+          'rgba(209, 213, 219, 1)'
+        ],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: { size: 13, weight: '600' },
+            padding: 15
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+              return `${label}: ${value}件 (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+function renderStatusChart() {
+  const ctx = document.getElementById('statusChart');
+  if (!ctx) return;
+  
+  destroyChart('statusChart');
+  
+  const statusCounts = {
+    new: state.progress.filter(p => state.getProjectStatus(p) === 'new').length,
+    progress: state.progress.filter(p => state.getProjectStatus(p) === 'progress').length,
+    complete: state.progress.filter(p => state.getProjectStatus(p) === 'complete').length
+  };
+  
+  charts.statusChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: ['新規', '進行中', '完了'],
+      datasets: [{
+        data: [statusCounts.new, statusCounts.progress, statusCounts.complete],
+        backgroundColor: [
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(245, 158, 11, 0.8)',
+          'rgba(16, 185, 129, 0.8)'
+        ],
+        borderColor: [
+          'rgba(59, 130, 246, 1)',
+          'rgba(245, 158, 11, 1)',
+          'rgba(16, 185, 129, 1)'
+        ],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: { size: 13, weight: '600' },
+            padding: 15
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+              return `${label}: ${value}件 (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+function renderManagerChart() {
+  const ctx = document.getElementById('managerChart');
+  if (!ctx) return;
+  
+  destroyChart('managerChart');
+  
+  // Count projects by manager
+  const managerCounts = {};
+  state.progress.forEach(p => {
+    managerCounts[p.manager] = (managerCounts[p.manager] || 0) + 1;
+  });
+  
+  const managers = Object.keys(managerCounts).sort((a, b) => managerCounts[b] - managerCounts[a]);
+  const counts = managers.map(m => managerCounts[m]);
+  
+  charts.managerChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: managers.length > 0 ? managers : ['データなし'],
+      datasets: [{
+        label: '案件数',
+        data: counts.length > 0 ? counts : [0],
+        backgroundColor: 'rgba(124, 58, 237, 0.8)',
+        borderColor: 'rgba(124, 58, 237, 1)',
+        borderWidth: 2,
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            font: { size: 12, weight: '600' }
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.05)'
+          }
+        },
+        x: {
+          ticks: {
+            font: { size: 12, weight: '600' }
+          },
+          grid: {
+            display: false
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `案件数: ${context.parsed.y}件`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+function renderPriorityChart() {
+  const ctx = document.getElementById('priorityChart');
+  if (!ctx) return;
+  
+  destroyChart('priorityChart');
+  
+  const priorityCounts = {
+    '高': state.progress.filter(p => p.priority === '高').length,
+    '中': state.progress.filter(p => p.priority === '中').length,
+    '低': state.progress.filter(p => p.priority === '低').length
+  };
+  
+  charts.priorityChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['高', '中', '低'],
+      datasets: [{
+        data: [priorityCounts['高'], priorityCounts['中'], priorityCounts['低']],
+        backgroundColor: [
+          'rgba(239, 68, 68, 0.8)',
+          'rgba(245, 158, 11, 0.8)',
+          'rgba(107, 114, 128, 0.8)'
+        ],
+        borderColor: [
+          'rgba(239, 68, 68, 1)',
+          'rgba(245, 158, 11, 1)',
+          'rgba(107, 114, 128, 1)'
+        ],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: { size: 13, weight: '600' },
+            padding: 15
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+              return `優先度${label}: ${value}件 (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+function renderGateAchievement() {
+  const container = document.getElementById('gateAchievement');
+  if (!container) return;
+  
+  if (state.progress.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🎯</div>
+        <div class="empty-state-text">まだデータがありません</div>
+      </div>
+    `;
+    return;
+  }
+  
+  const gates = [
+    { key: 'qaDate', label: 'QA受領' },
+    { key: 'simDate', label: 'SIM受領' },
+    { key: 'ir2Date', label: 'IR2受領' },
+    { key: 'testSheetDate', label: '試験シート受領' },
+    { key: 'tdTapDate', label: 'TD TAP設定' },
+    { key: 'syniverseDate', label: 'Syniverse設定' }
+  ];
+  
+  const totalProjects = state.progress.length;
+  
+  container.innerHTML = `
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+      ${gates.map(gate => {
+        const completed = state.progress.filter(p => p[gate.key]).length;
+        const percentage = Math.round((completed / totalProjects) * 100);
+        
+        return `
+          <div style="padding: 16px; background: rgba(255, 255, 255, 0.6); border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.05);">
+            <div style="font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">${gate.label}</div>
+            <div style="font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #2563eb, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;">
+              ${completed}/${totalProjects}
+            </div>
+            <div style="width: 100%; height: 8px; background: rgba(0, 0, 0, 0.05); border-radius: 999px; overflow: hidden;">
+              <div style="width: ${percentage}%; height: 100%; background: linear-gradient(90deg, #2563eb, #7c3aed); transition: width 0.3s ease;"></div>
+            </div>
+            <div style="font-size: 12px; color: #6b7280; margin-top: 4px; text-align: right;">${percentage}%</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
 // ===================================
 // Master Table Rendering
 // ===================================
-
 function renderMasterTable(searchTerm = '') {
   const tbody = document.getElementById('masterTableBody');
   
@@ -353,11 +623,9 @@ function renderMasterTable(searchTerm = '') {
     </tr>
   `).join('');
 }
-
 // ===================================
 // Progress Table Rendering
 // ===================================
-
 function renderProgressTable(searchTerm = '') {
   const tbody = document.getElementById('progressTableBody');
   
@@ -418,11 +686,9 @@ function renderProgressTable(searchTerm = '') {
     `;
   }).join('');
 }
-
 // ===================================
 // Order Table Rendering
 // ===================================
-
 function renderOrderTable(searchTerm = '') {
   const tbody = document.getElementById('orderTableBody');
   
@@ -476,11 +742,9 @@ function renderOrderTable(searchTerm = '') {
     </tr>
   `).join('');
 }
-
 // ===================================
 // Helper Functions
 // ===================================
-
 function getStatusBadge(status) {
   const badges = {
     'new': '<span class="badge badge-new">新規</span>',
@@ -489,7 +753,6 @@ function getStatusBadge(status) {
   };
   return badges[status] || badges['new'];
 }
-
 function getPriorityBadge(priority) {
   const badges = {
     '高': '<span class="badge badge-urgent">高</span>',
@@ -498,22 +761,18 @@ function getPriorityBadge(priority) {
   };
   return badges[priority] || badges['中'];
 }
-
 // ===================================
 // Master Modal Functions
 // ===================================
-
 function openMasterModal() {
   document.getElementById('masterModalTitle').textContent = 'マスター追加';
   document.getElementById('masterForm').reset();
   document.getElementById('masterEditId').value = '';
   document.getElementById('masterModal').classList.remove('hidden');
 }
-
 function closeMasterModal() {
   document.getElementById('masterModal').classList.add('hidden');
 }
-
 function editMaster(tadig) {
   const carrier = state.getCarrier(tadig);
   if (!carrier) return;
@@ -531,7 +790,6 @@ function editMaster(tadig) {
   
   document.getElementById('masterModal').classList.remove('hidden');
 }
-
 function saveMaster() {
   const form = document.getElementById('masterForm');
   if (!form.checkValidity()) {
@@ -566,7 +824,6 @@ function saveMaster() {
   // Re-enable TADIG field
   document.getElementById('masterTadig').readOnly = false;
 }
-
 function deleteMasterConfirm(tadig) {
   const carrier = state.getCarrier(tadig);
   if (!carrier) return;
@@ -584,11 +841,9 @@ function deleteMasterConfirm(tadig) {
     renderDashboard();
   }
 }
-
 // ===================================
 // Progress Modal Functions
 // ===================================
-
 function openProgressModal() {
   document.getElementById('progressModalTitle').textContent = '進捗案件追加';
   document.getElementById('progressForm').reset();
@@ -599,11 +854,9 @@ function openProgressModal() {
   
   document.getElementById('progressModal').classList.remove('hidden');
 }
-
 function closeProgressModal() {
   document.getElementById('progressModal').classList.add('hidden');
 }
-
 function populateTadigDropdown() {
   const select = document.getElementById('progressTadig');
   select.innerHTML = '<option value="">選択してください</option>';
@@ -615,7 +868,6 @@ function populateTadigDropdown() {
     select.appendChild(option);
   });
 }
-
 function editProgress(sequence) {
   const progress = state.getProgress(sequence);
   if (!progress) return;
@@ -640,7 +892,6 @@ function editProgress(sequence) {
   
   document.getElementById('progressModal').classList.remove('hidden');
 }
-
 function saveProgress() {
   const form = document.getElementById('progressForm');
   if (!form.checkValidity()) {
@@ -675,7 +926,6 @@ function saveProgress() {
   renderOrderTable();
   renderDashboard();
 }
-
 function deleteProgressConfirm(sequence) {
   const progress = state.getProgress(sequence);
   if (!progress) return;
@@ -690,15 +940,12 @@ function deleteProgressConfirm(sequence) {
     renderDashboard();
   }
 }
-
 // ===================================
 // Order Modal Functions
 // ===================================
-
 function closeOrderModal() {
   document.getElementById('orderModal').classList.add('hidden');
 }
-
 function editOrder(tadig) {
   const order = state.getOrder(tadig);
   if (!order) return;
@@ -715,7 +962,6 @@ function editOrder(tadig) {
   
   document.getElementById('orderModal').classList.remove('hidden');
 }
-
 function saveOrder() {
   const form = document.getElementById('orderForm');
   if (!form.checkValidity()) {
@@ -741,11 +987,9 @@ function saveOrder() {
   renderOrderTable();
   renderDashboard();
 }
-
 // ===================================
 // Event Listeners
 // ===================================
-
 document.addEventListener('DOMContentLoaded', () => {
   // Navigation
   document.querySelectorAll('.sidebar-nav-link').forEach(link => {
@@ -785,43 +1029,3 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize with dashboard
   switchView('dashboard');
 });
-
-// ===================================
-// Sample Data (for testing)
-// ===================================
-
-function loadSampleData() {
-  if (state.carriers.length === 0) {
-    // Add sample carriers
-    state.addCarrier({
-      tadig: 'JPNDC',
-      name: 'NTTドコモ',
-      country: '日本',
-      plmn: '44010',
-      serviceType: 'ALL'
-    });
-    
-    state.addCarrier({
-      tadig: 'USATT',
-      name: 'AT&T USA',
-      country: 'アメリカ',
-      plmn: '310410',
-      serviceType: 'LTE+5G'
-    });
-    
-    state.addCarrier({
-      tadig: 'GBRORA',
-      name: 'Orange UK',
-      country: 'イギリス',
-      plmn: '23433',
-      serviceType: 'VOLTE+5G'
-    });
-  }
-  
-  renderView(state.currentView);
-}
-
-// Uncomment to load sample data on first run
-// if (state.carriers.length === 0) {
-//   loadSampleData();
-// }
