@@ -6,6 +6,7 @@
   <title>キャリアネットワーク開通管理システム</title>
   <meta name="description" content="海外キャリアとの通信ネットワーク開通業務を管理するKintone風アプリケーション">
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <div class="app-container">
@@ -21,7 +22,6 @@
         </div>
       </div>
     </header>
-
     <!-- Main Body -->
     <div class="app-body">
       <!-- Sidebar Navigation -->
@@ -55,13 +55,13 @@
           </ul>
         </nav>
       </aside>
-
       <!-- Main Content Area -->
       <main class="main-content">
         <!-- Dashboard View -->
         <div id="dashboardView" class="view-container">
-          <h2 class="mb-lg">ダッシュボード</h2>
+          <h2 class="mb-lg" style="font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #1e3a8a, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">📊 ダッシュボード</h2>
           
+          <!-- Stats Grid -->
           <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-label">総キャリア数</div>
@@ -80,10 +80,50 @@
               <div class="stat-value" id="statPendingOrders">0</div>
             </div>
           </div>
-
+          <!-- Charts Grid -->
+          <div class="charts-grid">
+            <!-- Progress Overview Chart -->
+            <div class="chart-card">
+              <h3 class="chart-title">📈 全体進捗状況</h3>
+              <div class="chart-container">
+                <canvas id="progressChart"></canvas>
+              </div>
+            </div>
+            <!-- Status Distribution Chart -->
+            <div class="chart-card">
+              <h3 class="chart-title">📊 ステータス分布</h3>
+              <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+              </div>
+            </div>
+            <!-- Manager Analytics Chart -->
+            <div class="chart-card">
+              <h3 class="chart-title">👥 担当者別案件数</h3>
+              <div class="chart-container">
+                <canvas id="managerChart"></canvas>
+              </div>
+            </div>
+            <!-- Priority Distribution Chart -->
+            <div class="chart-card">
+              <h3 class="chart-title">⚡ 優先度分布</h3>
+              <div class="chart-container">
+                <canvas id="priorityChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <!-- Gate Achievement Card -->
           <div class="card">
             <div class="card-header">
-              <h3 class="card-title">最近の活動</h3>
+              <h3 class="card-title">🎯 Gate条件達成状況</h3>
+            </div>
+            <div class="card-body">
+              <div id="gateAchievement"></div>
+            </div>
+          </div>
+          <!-- Recent Activity Card -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">📝 最近の活動</h3>
             </div>
             <div class="card-body">
               <div id="recentActivity" class="empty-state">
@@ -93,7 +133,6 @@
             </div>
           </div>
         </div>
-
         <!-- Master File View -->
         <div id="masterView" class="view-container hidden">
           <div class="card">
@@ -136,7 +175,6 @@
             </div>
           </div>
         </div>
-
         <!-- Progress Management View -->
         <div id="progressView" class="view-container hidden">
           <div class="card">
@@ -182,7 +220,6 @@
             </div>
           </div>
         </div>
-
         <!-- Order Dependency View -->
         <div id="orderView" class="view-container hidden">
           <div class="card">
@@ -225,7 +262,6 @@
       </main>
     </div>
   </div>
-
   <!-- Master Modal -->
   <div id="masterModal" class="modal-overlay hidden">
     <div class="modal">
@@ -275,7 +311,6 @@
       </div>
     </div>
   </div>
-
   <!-- Progress Modal -->
   <div id="progressModal" class="modal-overlay hidden">
     <div class="modal">
@@ -370,7 +405,6 @@
       </div>
     </div>
   </div>
-
   <!-- Order Modal -->
   <div id="orderModal" class="modal-overlay hidden">
     <div class="modal">
@@ -432,7 +466,6 @@
       </div>
     </div>
   </div>
-
   <script src="app.js"></script>
 </body>
 </html>
