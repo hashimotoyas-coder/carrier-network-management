@@ -267,7 +267,7 @@ function renderDashboard() {
               return `
                 <tr>
                   <td>${p.sequence}</td>
-                  <td>${p.tadig} ${carrier ? [(${carrier.name})](cci:1://file:///Users/hashi/Desktop/hair%20salon%20HP/%E3%83%AD%E3%83%BC%E3%83%9F%E3%83%B3%E3%82%B0%E6%A1%88%E4%BB%B6%E7%AE%A1%E7%90%86/app.js:361:12-367:13) : ''}</td>
+                  <td>${p.tadig} ${carrier ? [(${carrier.name})]((cci:1://file:///Users/hashi/Desktop/hair%20salon%20HP/%E3%83%AD%E3%83%BC%E3%83%9F%E3%83%B3%E3%82%B0%E6%A1%88%E4%BB%B6%E7%AE%A1%E7%90%86/app.js:419:12-425:13) : ''} : ''}</td>
                   <td>${p.manager}</td>
                   <td>${getStatusBadge(status)}</td>
                   <td>${getPriorityBadge(p.priority)}</td>
